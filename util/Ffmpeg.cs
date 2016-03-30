@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 
 namespace NMaier.SimpleDlna.Utilities
 {
+  using System.Text;
   using InfoCache = LeastRecentlyUsedDictionary<FileInfo, IDictionary<string, string>>;
 
   public static class FFmpeg
@@ -236,6 +237,12 @@ namespace NMaier.SimpleDlna.Utilities
       if (file == null) {
         throw new ArgumentNullException("file");
       }
+
+      if (file.Extension.Equals("SRT", StringComparison.OrdinalIgnoreCase))
+      {
+        return File.ReadAllText(file.FullName, Encoding.Default);
+      }
+
       try {
         using (var p = new Process()) {
           var sti = p.StartInfo;
