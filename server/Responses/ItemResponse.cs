@@ -53,7 +53,8 @@ namespace NMaier.SimpleDlna.Server
         catch (NotImplementedException) {
         }
       }
-      if (request.Headers.ContainsKey("getCaptionInfo.sec")) {
+      // antonio-bakula: On Samsung TV-s there is no getCaptionInfo.sec in request but it supports srt titles
+      //if (request.Headers.ContainsKey("getCaptionInfo.sec")) {
         var mvi = item as IMetaVideoItem;
         if (mvi != null && mvi.Subtitle.HasSubtitle) {
           var surl = String.Format(
@@ -66,7 +67,8 @@ namespace NMaier.SimpleDlna.Server
           DebugFormat("Sending subtitles {0}", surl);
           headers.Add("CaptionInfo.sec", surl);
         }
-      }
+      //}
+
       if (request.Headers.ContainsKey("getMediaInfo.sec")) {
         var md = item as IMetaDuration;
         if (md != null && md.MetaDuration.HasValue) {

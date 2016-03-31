@@ -75,6 +75,14 @@ namespace NMaier.SimpleDlna.FileMediaServer
     internal VideoFile(FileServer server, FileInfo aFile, DlnaMime aType)
       : base(server, aFile, aType, DlnaMediaTypes.Video)
     {
+      try
+      {
+        this.subTitle = new Subtitle(new FileInfo(System.IO.Path.ChangeExtension(aFile.FullName, ".srt")));
+      }
+      catch (Exception)
+      {
+        subTitle = null;
+      }
     }
 
     public long? Bookmark
