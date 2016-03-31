@@ -73,6 +73,9 @@ namespace NMaier.SimpleDlna.Server
     private static readonly string[] extFLAC =
       new string[] { "flac" };
 
+    private static readonly string[] extSUBTTL =
+      new string[] { "srt", "sub" };
+
     public static readonly Dictionary<DlnaMime, List<string>> Dlna2Ext =
       new Dictionary<DlnaMime, List<string>>();
 
@@ -103,7 +106,8 @@ namespace NMaier.SimpleDlna.Server
         { DlnaMime.VideoMATROSKA, "video/x-mkv" },
         { DlnaMime.VideoMPEG, "video/mpeg" },
         { DlnaMime.VideoOGV, "video/ogg" },
-        { DlnaMime.VideoWMV, "video/x-ms-wmv" } };
+        { DlnaMime.VideoWMV, "video/x-ms-wmv" },
+    };
 
     public static readonly Dictionary<DlnaMime, List<string>> AllPN = new Dictionary<DlnaMime, List<string>>() {
       { DlnaMime.AudioAAC, new List<string> {
@@ -266,7 +270,9 @@ namespace NMaier.SimpleDlna.Server
         new
       { t = DlnaMime.VideoOGV, e = extOGV },
         new
-      { t = DlnaMime.VideoWMV, e = extWMV }
+      { t = DlnaMime.VideoWMV, e = extWMV },
+        new
+      { t = DlnaMime.SubtitleSRT, e = extSUBTTL }
       };
 
       foreach (var i in e2d) {

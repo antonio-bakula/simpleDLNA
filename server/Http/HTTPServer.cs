@@ -162,7 +162,8 @@ namespace NMaier.SimpleDlna.Server
     private void TimeouterCallback(object sender, ElapsedEventArgs e)
     {
       foreach (var c in clients.ToList()) {
-        if (c.Key.IsATimeout) {
+        if (c.Key != null && c.Key.IsATimeout)
+        {
           DebugFormat("Collected timeout client {0}", c);
           c.Key.Close();
         }

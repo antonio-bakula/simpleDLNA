@@ -238,7 +238,7 @@ namespace NMaier.SimpleDlna.Utilities
         throw new ArgumentNullException("file");
       }
 
-      if (file.Extension.Equals("SRT", StringComparison.OrdinalIgnoreCase))
+      if (file.Extension.Equals(".srt", StringComparison.OrdinalIgnoreCase))
       {
         return File.ReadAllText(file.FullName, Encoding.Default);
       }
