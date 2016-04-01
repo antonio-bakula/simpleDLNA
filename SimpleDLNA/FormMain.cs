@@ -90,7 +90,8 @@ namespace NMaier.SimpleDlna.GUI
       StartPipeNotification();
 
       notifyIcon.Icon = Icon;
-      if (!string.IsNullOrWhiteSpace(Config.cache)) {
+      if (!string.IsNullOrWhiteSpace(Config.cache))
+      {
         cacheFile = new FileInfo(Config.cache);
       }
       CreateHandle();
@@ -490,6 +491,8 @@ namespace NMaier.SimpleDlna.GUI
         log.Error("Failed to write descriptors", ex);
       }
       Config.Save();
+      listDescriptions.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+      listDescriptions.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
     }
 
     private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -664,6 +667,10 @@ namespace NMaier.SimpleDlna.GUI
       public string Message;
 
       public string Time;
+    }
+
+    private void FormMain_Load(object sender, EventArgs e)
+    {
     }
   }
 }
