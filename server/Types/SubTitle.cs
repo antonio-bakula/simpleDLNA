@@ -37,9 +37,9 @@ namespace NMaier.SimpleDlna.Server
         Load(file);
     }
 
-    public Subtitle(string text)
+    public Subtitle(string txt)
     {
-      this.text = text;
+      this.text = txt;
     }
 
     public IMediaCoverResource Cover
@@ -163,7 +163,9 @@ namespace NMaier.SimpleDlna.Server
             if (!sti.Exists) {
               continue;
             }
-            text = FFmpeg.GetSubtitleSubrip(sti);
+            this.text = FFmpeg.GetSubtitleSubrip(sti);
+            if (!string.IsNullOrEmpty(this.text))
+              return;
           }
           catch (NotSupportedException) {
           }
@@ -174,6 +176,8 @@ namespace NMaier.SimpleDlna.Server
         }
         try {
           text = FFmpeg.GetSubtitleSubrip(file);
+          if (!string.IsNullOrEmpty(this.text))
+            return;
         }
         catch (NotSupportedException) {
         }
