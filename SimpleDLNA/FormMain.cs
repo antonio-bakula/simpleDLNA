@@ -221,6 +221,7 @@ namespace NMaier.SimpleDlna.GUI
           return;
         }
         item.Rescan();
+        ResizeListViewColumns();
       }
       catch (Exception ex) {
         MessageBox.Show(
@@ -491,6 +492,11 @@ namespace NMaier.SimpleDlna.GUI
         log.Error("Failed to write descriptors", ex);
       }
       Config.Save();
+      ResizeListViewColumns();
+    }
+
+    private void ResizeListViewColumns()
+    {
       listDescriptions.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
       listDescriptions.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
     }

@@ -33,7 +33,8 @@ namespace NMaier.SimpleDlna.Server
 
     public Subtitle(FileInfo file)
     {
-      Load(file);
+      if (file.Exists)
+        Load(file);
     }
 
     public Subtitle(string text)

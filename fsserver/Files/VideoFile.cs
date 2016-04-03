@@ -12,7 +12,7 @@ namespace NMaier.SimpleDlna.FileMediaServer
   {
     private string[] actors;
 
-    private long? bookmark;
+    private long bookmark = 0;
 
     private string description;
 
@@ -24,15 +24,15 @@ namespace NMaier.SimpleDlna.FileMediaServer
 
     private string genre;
 
-    private int? height;
+    private int height = 0;
 
     private bool initialized = false;
 
-    private Subtitle subTitle;
+    private Subtitle subTitle = null;
 
     private string title;
 
-    private int? width;
+    private int width = 0;
 
     private VideoFile(SerializationInfo info, StreamingContext ctx)
       : this(info, ctx.Context as DeserializeInfo)
@@ -42,46 +42,65 @@ namespace NMaier.SimpleDlna.FileMediaServer
     private VideoFile(SerializationInfo info, DeserializeInfo di)
       : this(di.Server, di.Info, di.Type)
     {
-      actors = info.GetValue("a", typeof(string[])) as string[];
-      description = info.GetString("de");
-      director = info.GetString("di");
-      genre = info.GetString("g");
-      title = info.GetString("t");
-      try {
+      var fields = new HashSet<string>();
+      foreach (var objectData in info)
+      {
+        fields.Add(objectData.Name);
+      }
+
+      if (fields.Contains("a"))
+        actors = info.GetValue("a", typeof(string[])) as string[];
+      
+      if (fields.Contains("de"))      
+        description = info.GetString("de");
+
+      if (fields.Contains("di"))      
+        director = info.GetString("di");
+      
+      if (fields.Contains("g"))
+        genre = info.GetString("g");
+      
+      if (fields.Contains("t"))
+        title = info.GetString("t");
+
+      if (fields.Contains("w"))
         width = info.GetInt32("w");
+
+      if (fields.Contains("h"))
         height = info.GetInt32("h");
+
+      this.duration = VideoFile.EmptyDuration;
+      if (fields.Contains("du"))
+      {
+        var ts = info.GetInt64("du");
+        if (ts > 0)
+        {
+          duration = new TimeSpan(ts);
+        }
       }
-      catch (Exception) {
-      }
-      var ts = info.GetInt64("du");
-      if (ts > 0) {
-        duration = new TimeSpan(ts);
-      }
-      try {
+
+      if (fields.Contains("b"))
         bookmark = info.GetInt64("b");
-      }
-      catch (Exception) {
-        bookmark = 0;
-      }
-      try {
+
+      if (fields.Contains("st"))
         subTitle = info.GetValue("st", typeof(Subtitle)) as Subtitle;
-      }
-      catch (Exception) {
-        subTitle = null;
-      }
+
       initialized = true;
     }
 
-    internal VideoFile(FileServer server, FileInfo aFile, DlnaMime aType)
-      : base(server, aFile, aType, DlnaMediaTypes.Video)
+    internal VideoFile(FileServer server, FileInfo aFile, DlnaMime aType) : base(server, aFile, aType, DlnaMediaTypes.Video)
     {
-      try
+      var subtitleFile = new FileInfo(System.IO.Path.ChangeExtension(aFile.FullName, ".srt"));
+      if (subtitleFile.Exists)
       {
-        this.subTitle = new Subtitle(new FileInfo(System.IO.Path.ChangeExtension(aFile.FullName, ".srt")));
-      }
-      catch (Exception)
-      {
-        subTitle = null;
+        try
+        {
+          this.subTitle = new Subtitle(subtitleFile);
+        }
+        catch (Exception)
+        {
+          subTitle = null;
+        }
       }
     }
 
@@ -89,12 +108,22 @@ namespace NMaier.SimpleDlna.FileMediaServer
     {
       get
       {
-        return bookmark;
+        if (bookmark == 0)
+          return null;
+        else
+          return bookmark;
       }
       set
       {
-        bookmark = value;
-        Server.UpdateFileCache(this);
+        if (value.HasValue)
+        {
+          bookmark = value.Value;
+          Server.UpdateFileCache(this);
+        }
+        else
+        {
+          bookmark = 0;
+        }
       }
     }
 
@@ -151,7 +180,10 @@ namespace NMaier.SimpleDlna.FileMediaServer
       get
       {
         MaybeInit();
-        return height;
+        if (height == 0)
+          return null;
+        else
+          return height;
       }
     }
 
@@ -160,7 +192,10 @@ namespace NMaier.SimpleDlna.FileMediaServer
       get
       {
         MaybeInit();
-        return width;
+        if (width == 0)
+          return null;
+        else
+          return width;
       }
     }
 
@@ -185,10 +220,10 @@ namespace NMaier.SimpleDlna.FileMediaServer
         if (genre != null) {
           rv.Add("Genre", genre);
         }
-        if (width != null && height != null) {
+        if (width > 0 && height > 0) {
           rv.Add(
             "Resolution",
-            string.Format("{0}x{1}", width.Value, height.Value)
+            string.Format("{0}x{1}", width, height)
           );
         }
         return rv;

@@ -99,11 +99,9 @@ namespace NMaier.SimpleDlna.GUI
         fileServer = new FileServer(Description.Types, ids, dirs) {
           FriendlyName = Description.Name
         };
-#if !DEBUG
         if (cacheFile != null) {
           fileServer.SetCacheFile(cacheFile);
         }
-#endif
         fileServer.Changing += (o, e) =>
         {
           state = State.Refreshing;

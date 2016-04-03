@@ -16,7 +16,7 @@ namespace NMaier.SimpleDlna.FileMediaServer
   {
     private const uint SCHEMA = 0x20140818;
 
-    private readonly IDbConnection connection;
+    private IDbConnection connection;
 
     private readonly IDbCommand insert;
 
@@ -55,10 +55,17 @@ namespace NMaier.SimpleDlna.FileMediaServer
 
     internal FileStore(FileInfo storeFile)
     {
-      StoreFile = storeFile;
+      /// just path, add default filename
+      if (string.IsNullOrEmpty(storeFile.Name))
+      {
+        this.StoreFile = new FileInfo(Path.Combine(storeFile.DirectoryName, "sdlna_cache"));
+      }
+      else
+      {
+        this.StoreFile = storeFile;
+      }
 
-      OpenConnection(storeFile, out connection);
-      SetupDatabase();
+      OpenConnection();
 
       select = connection.CreateCommand();
       select.CommandText =
@@ -100,46 +107,28 @@ namespace NMaier.SimpleDlna.FileMediaServer
       insertCover.DbType = DbType.Binary;
       insertCover.ParameterName = "@cover";
 
-      InfoFormat("FileStore at {0} is ready", storeFile.FullName);
+      InfoFormat("FileStore at {0} is ready", this.StoreFile.FullName);
 
       vacuumer.Add(connection);
     }
 
-    private void OpenConnection(FileInfo storeFile,
-                                out IDbConnection newConnection)
+    private void OpenConnection()
     {
-      lock (globalLock) {
-        newConnection = Sqlite.GetDatabaseConnection(storeFile);
-        try {
-          using (var ver = newConnection.CreateCommand()) {
-            ver.CommandText = "PRAGMA user_version";
-            var currentVersion = (uint)(long)ver.ExecuteScalar();
-            if (!currentVersion.Equals(SCHEMA)) {
-              throw new ArgumentOutOfRangeException("SCHEMA");
-            }
+      this.connection = null;
+
+      lock (globalLock) 
+      {
+        this.connection = Sqlite.GetDatabaseConnection(this.StoreFile);
+
+        using (var ver = this.connection.CreateCommand())
+        {
+          ver.CommandText = "PRAGMA user_version";
+          var currentVersion = (uint)(long)ver.ExecuteScalar();
+          if (!currentVersion.Equals(SCHEMA)) {
+            RecreateDatabaseAndUpdateSchema();
           }
         }
-        catch (Exception ex) {
-          NoticeFormat(
-            "Recreating database, schema update. ({0})",
-            ex.Message
-          );
-          Sqlite.ClearPool(newConnection);
-          newConnection.Close();
-          newConnection.Dispose();
-          newConnection = null;
-          for (var i = 0; i < 10; ++i) {
-            try {
-              GC.Collect();
-              storeFile.Delete();
-              break;
-            }
-            catch (IOException) {
-              Thread.Sleep(100);
-            }
-          }
-          newConnection = Sqlite.GetDatabaseConnection(storeFile);
-        }
+
         using (var pragma = connection.CreateCommand()) {
           pragma.CommandText = "PRAGMA journal_size_limt = 33554432";
           pragma.ExecuteNonQuery();
@@ -149,6 +138,30 @@ namespace NMaier.SimpleDlna.FileMediaServer
           pragma.ExecuteNonQuery();
         }
       }
+    }
+
+    private void RecreateDatabaseAndUpdateSchema()
+    {
+      NoticeFormat("Database version mismatch ! Recreating database, schema update.");
+      Sqlite.ClearPool(this.connection);
+      this.connection.Close();
+      this.connection.Dispose();
+      this.connection = null;
+      for (var i = 0; i < 10; ++i)
+      {
+        try
+        {
+          GC.Collect();
+          this.StoreFile.Delete();
+          break;
+        }
+        catch (IOException)
+        {
+          Thread.Sleep(100);
+        }
+      }
+      this.connection = Sqlite.GetDatabaseConnection(this.StoreFile);
+      SetupDatabase();
     }
 
     private void SetupDatabase()
@@ -162,8 +175,7 @@ namespace NMaier.SimpleDlna.FileMediaServer
           pragma.ExecuteNonQuery();
         }
         using (var create = connection.CreateCommand()) {
-          create.CommandText =
-            "CREATE TABLE IF NOT EXISTS store (key TEXT PRIMARY KEY ON CONFLICT REPLACE, size INT, time INT, data BINARY, cover BINARY)";
+          create.CommandText = "CREATE TABLE IF NOT EXISTS store (key TEXT PRIMARY KEY ON CONFLICT REPLACE, size INT, time INT, data BINARY, cover BINARY)";
           create.ExecuteNonQuery();
         }
         transaction.Commit();

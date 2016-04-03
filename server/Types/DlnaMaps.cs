@@ -311,14 +311,17 @@ namespace NMaier.SimpleDlna.Server
     private static void InitMedia(string[][] k, DlnaMediaTypes t)
     {
       foreach (var i in k) {
-        var e = (from ext in i
-                 select ext.ToUpperInvariant()).ToList();
-        try {
-          Media2Ext.Add(t, e);
-        }
-        catch (ArgumentException) {
+        var e = (from ext in i select ext.ToUpperInvariant()).ToList();
+
+        if (Media2Ext.ContainsKey(t))
+        {
           Media2Ext[t].AddRange(e);
         }
+        else
+        {
+          Media2Ext.Add(t, e);
+        }
+
         foreach (var ext in e) {
           Ext2Media.Add(ext.ToUpperInvariant(), t);
         }
