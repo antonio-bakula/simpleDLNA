@@ -45,7 +45,8 @@ namespace NMaier.SimpleDlna.FileMediaServer
       var fields = new HashSet<string>();
       foreach (var objectData in info)
       {
-        fields.Add(objectData.Name);
+        if (objectData.Value != null)
+          fields.Add(objectData.Name);
       }
 
       if (fields.Contains("a"))
