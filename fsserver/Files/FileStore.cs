@@ -58,7 +58,7 @@ namespace NMaier.SimpleDlna.FileMediaServer
       /// just path, add default filename
       if (string.IsNullOrEmpty(storeFile.Name))
       {
-        this.StoreFile = new FileInfo(Path.Combine(storeFile.DirectoryName, "sdlna_cache"));
+        this.StoreFile = new FileInfo(Path.Combine(storeFile.DirectoryName, "sdlna_cache.sqlite"));
       }
       else
       {
@@ -118,15 +118,25 @@ namespace NMaier.SimpleDlna.FileMediaServer
 
       lock (globalLock) 
       {
+        bool existingDatabase = this.StoreFile.Exists;
         this.connection = Sqlite.GetDatabaseConnection(this.StoreFile);
 
-        using (var ver = this.connection.CreateCommand())
+        if (existingDatabase)
         {
-          ver.CommandText = "PRAGMA user_version";
-          var currentVersion = (uint)(long)ver.ExecuteScalar();
-          if (!currentVersion.Equals(SCHEMA)) {
-            RecreateDatabaseAndUpdateSchema();
+          using (var ver = this.connection.CreateCommand())
+          {
+            ver.CommandText = "PRAGMA user_version";
+            var currentVersion = (uint)(long)ver.ExecuteScalar();
+            if (!currentVersion.Equals(SCHEMA))
+            {
+              DropTables();
+              CreateTables();
+            }
           }
+        }
+        else
+        {
+          CreateTables();
         }
 
         using (var pragma = connection.CreateCommand()) {
@@ -140,31 +150,22 @@ namespace NMaier.SimpleDlna.FileMediaServer
       }
     }
 
-    private void RecreateDatabaseAndUpdateSchema()
+    private void DropTables()
     {
-      NoticeFormat("Database version mismatch ! Recreating database, schema update.");
-      Sqlite.ClearPool(this.connection);
-      this.connection.Close();
-      this.connection.Dispose();
-      this.connection = null;
-      for (var i = 0; i < 10; ++i)
+      NoticeFormat("Database version mismatch ! Recreating tables, schema update.");
+
+      using (var transaction = connection.BeginTransaction())
       {
-        try
+        using (var create = connection.CreateCommand())
         {
-          GC.Collect();
-          this.StoreFile.Delete();
-          break;
+          create.CommandText = "DROP TABLE IF EXISTS store;";
+          create.ExecuteNonQuery();
         }
-        catch (IOException)
-        {
-          Thread.Sleep(100);
-        }
-      }
-      this.connection = Sqlite.GetDatabaseConnection(this.StoreFile);
-      SetupDatabase();
+        transaction.Commit();
+      }     
     }
 
-    private void SetupDatabase()
+    private void CreateTables()
     {
       using (var transaction = connection.BeginTransaction()) {
         using (var pragma = connection.CreateCommand()) {
