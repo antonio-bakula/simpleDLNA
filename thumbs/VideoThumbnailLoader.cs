@@ -97,10 +97,8 @@ namespace NMaier.SimpleDlna.Thumbnails
         }
 
         var sti = p.StartInfo;
-#if !DEBUG
-        sti.CreateNoWindow = true;
-#endif
         sti.UseShellExecute = false;
+        sti.CreateNoWindow = true;
         sti.FileName = FFmpeg.FFmpegExecutable;
         sti.Arguments = String.Format(
           "-v quiet -ss {0} -i pipe: -an -frames:v 1 -f image2  pipe:",
@@ -130,10 +128,8 @@ namespace NMaier.SimpleDlna.Thumbnails
         try {
           using (var p = new Process()) {
             var sti = p.StartInfo;
-#if !DEBUG
-            sti.CreateNoWindow = true;
-#endif
             sti.UseShellExecute = false;
+            sti.CreateNoWindow = true;
             sti.FileName = FFmpeg.FFmpegExecutable;
             sti.Arguments = String.Format(
               "-v quiet -ss {0} -i \"{1}\" -an -frames:v 1 -f image2 pipe:",
@@ -204,7 +200,8 @@ namespace NMaier.SimpleDlna.Thumbnails
           return GetThumbnailInternal(stream, ref width, ref height);
         }
         var fi = item as FileInfo;
-        if (fi != null) {
+        if (fi != null && !fi.Extension.Equals(".vob", StringComparison.OrdinalIgnoreCase))
+        {
           return GetThumbnailInternal(fi, ref width, ref height);
         }
         throw new NotSupportedException();

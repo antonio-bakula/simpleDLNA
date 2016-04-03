@@ -137,9 +137,7 @@ namespace NMaier.SimpleDlna.Utilities
       using (var p = new Process())
       {
         var sti = p.StartInfo;
-#if !DEBUG
         sti.CreateNoWindow = true;
-#endif
         sti.UseShellExecute = false;
         sti.FileName = FFmpeg.FFmpegExecutable;
         sti.Arguments = String.Format("-i \"{0}\"", file.FullName);
@@ -258,9 +256,7 @@ namespace NMaier.SimpleDlna.Utilities
         using (var p = new Process())
         {
           var sti = p.StartInfo;
-#if !DEBUG
           sti.CreateNoWindow = true;
-#endif
           sti.UseShellExecute = false;
           sti.FileName = FFmpeg.FFmpegExecutable;
           sti.Arguments = String.Format(
