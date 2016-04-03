@@ -49,8 +49,12 @@ namespace NMaier.SimpleDlna.FileMediaServer
               continue;
             }
             file.LoadCover();
-            using (var k = file.Cover.CreateContentStream()) {
-              k.ReadByte();
+            if (file.Cover != null)
+            {
+              using (var k = file.Cover.CreateContentStream())
+              {
+                k.ReadByte();
+              }
             }
           }
           catch (Exception) {

@@ -337,7 +337,8 @@ namespace NMaier.SimpleDlna.FileMediaServer
               // Ignore and store null.
             }
             try {
-              insert.ExecuteNonQuery();
+              if (insertCover.Value != null)
+                insert.ExecuteNonQuery();
             }
             catch (DbException ex) {
               Error("Failed to put file cover into store", ex);
