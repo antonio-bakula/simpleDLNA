@@ -3,6 +3,7 @@ using NMaier.SimpleDlna.Utilities;
 using System;
 using System.IO;
 using System.Text;
+using System.Linq;
 
 namespace NMaier.SimpleDlna.Server
 {
@@ -26,6 +27,16 @@ namespace NMaier.SimpleDlna.Server
       };
 
     private string text = null;
+
+    public static bool SubtitleFormatSupported(FileInfo file)
+    {
+      return SubtitleFormatSupported(file.Extension);
+    }
+
+    public static bool SubtitleFormatSupported(string ext)
+    {
+      return exts.ToList().Contains(ext);
+    }
 
     public Subtitle()
     {
@@ -153,16 +164,20 @@ namespace NMaier.SimpleDlna.Server
     {
       try {
         // Try external
-        foreach (var i in exts) {
-          var sti = new FileInfo(
-            System.IO.Path.ChangeExtension(file.FullName, i));
+        foreach (var i in exts) 
+        {
+          var sti = new FileInfo(System.IO.Path.ChangeExtension(file.FullName, i));
           try {
-            if (!sti.Exists) {
+
+            if (!sti.Exists) 
               sti = new FileInfo(file.FullName + i);
-            }
-            if (!sti.Exists) {
+
+            if (!sti.Exists) 
               continue;
-            }
+
+            if (!SubtitleFormatSupported(sti))
+              continue;
+
             this.text = FFmpeg.GetSubtitleSubrip(sti);
             if (!string.IsNullOrEmpty(this.text))
               return;
@@ -175,7 +190,9 @@ namespace NMaier.SimpleDlna.Server
           }
         }
         try {
-          text = FFmpeg.GetSubtitleSubrip(file);
+          this.text = "";
+          if (SubtitleFormatSupported(file))
+            text = FFmpeg.GetSubtitleSubrip(file);
           if (!string.IsNullOrEmpty(this.text))
             return;
         }
