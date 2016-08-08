@@ -81,6 +81,8 @@ namespace NMaier.SimpleDlna.Server
       else {
         id = paths[path];
       }
+      
+      InfoFormat("RegisterPath: Path {0} got ID {1}", item.Path, id);
       ids[id] = new WeakReference(item);
 
       item.Id = id;

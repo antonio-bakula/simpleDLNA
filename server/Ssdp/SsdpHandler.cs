@@ -76,7 +76,8 @@ namespace NMaier.SimpleDlna.Server.Ssdp
       get
       {
         UpnpDevice[] devs;
-        lock (devices) {
+        lock (devices)
+        {
           devs = devices.Values.SelectMany(i =>
           {
             return i;
@@ -88,19 +89,24 @@ namespace NMaier.SimpleDlna.Server.Ssdp
 
     private void ProcessQueue(object sender, Timers.ElapsedEventArgs e)
     {
-      while (messageQueue.Count != 0) {
+      while (messageQueue.Count != 0)
+      {
         var msg = (Datagram)null;
-        if (!messageQueue.TryPeek(out msg)) {
+        if (!messageQueue.TryPeek(out msg))
+        {
           continue;
         }
-        if (msg != null && (running || msg.Sticky)) {
+        if (msg != null && (running || msg.Sticky))
+        {
           msg.Send();
-          if (msg.SendCount > DATAGRAMS_PER_MESSAGE) {
+          if (msg.SendCount > DATAGRAMS_PER_MESSAGE)
+          {
             messageQueue.TryDequeue(out msg);
           }
           break;
         }
-        else {
+        else
+        {
           messageQueue.TryDequeue(out msg);
         }
       }
@@ -111,43 +117,53 @@ namespace NMaier.SimpleDlna.Server.Ssdp
 
     private void Receive()
     {
-      try {
+      try
+      {
         client.BeginReceive(ReceiveCallback, null);
       }
-      catch (ObjectDisposedException) {
+      catch (ObjectDisposedException)
+      {
       }
     }
 
     private void ReceiveCallback(IAsyncResult result)
     {
-      try {
+      try
+      {
         var endpoint = new IPEndPoint(IPAddress.None, SSDP_PORT);
         var received = client.EndReceive(result, ref endpoint);
-        if (received == null) {
+        if (received == null)
+        {
           throw new IOException("Didn't receive anything");
         }
-        if (received.Length == 0) {
+        if (received.Length == 0)
+        {
           throw new IOException("Didn't receive any bytes");
         }
 #if DUMP_ALL_SSDP
         DebugFormat("{0} - SSDP Received a datagram", endpoint);
 #endif
         using (var reader = new StreamReader(
-          new MemoryStream(received), Encoding.ASCII)) {
+          new MemoryStream(received), Encoding.ASCII))
+        {
           var proto = reader.ReadLine();
-          if (proto == null) {
+          if (proto == null)
+          {
             throw new IOException("Couldn't read protocol line");
           }
           proto = proto.Trim();
-          if (string.IsNullOrEmpty(proto)) {
+          if (string.IsNullOrEmpty(proto))
+          {
             throw new IOException("Invalid protocol line");
           }
           var method = proto.Split(new char[] { ' ' }, 2)[0];
           var headers = new Headers();
           for (var line = reader.ReadLine(); line != null;
-            line = reader.ReadLine()) {
+            line = reader.ReadLine())
+          {
             line = line.Trim();
-            if (string.IsNullOrEmpty(line)) {
+            if (string.IsNullOrEmpty(line))
+            {
               break;
             }
             var parts = line.Split(new char[] { ':' }, 2);
@@ -157,15 +173,18 @@ namespace NMaier.SimpleDlna.Server.Ssdp
           DebugFormat("{0} - Datagram method: {1}", endpoint, method);
           Debug(headers);
 #endif
-          if (method == "M-SEARCH") {
+          if (method == "M-SEARCH")
+          {
             RespondToSearch(endpoint, headers["st"]);
           }
         }
       }
-      catch (IOException ex) {
+      catch (IOException ex)
+      {
         Debug("Failed to read SSDP message", ex);
       }
-      catch (Exception ex) {
+      catch (Exception ex)
+      {
         Warn("Failed to read SSDP message", ex);
       }
       Receive();
@@ -174,11 +193,13 @@ namespace NMaier.SimpleDlna.Server.Ssdp
     private void SendDatagram(IPEndPoint endpoint, IPAddress address,
                               string message, bool sticky)
     {
-      if (!running) {
+      if (!running)
+      {
         return;
       }
       var dgram = new Datagram(endpoint, address, message, sticky);
-      if (messageQueue.Count == 0) {
+      if (messageQueue.Count == 0)
+      {
         dgram.Send();
       }
       messageQueue.Enqueue(dgram);
@@ -217,7 +238,8 @@ namespace NMaier.SimpleDlna.Server.Ssdp
     internal void NotifyAll()
     {
       Debug("NotifyAll");
-      foreach (var d in Devices) {
+      foreach (var d in Devices)
+      {
         NotifyDevice(d, "alive", false);
       }
     }
@@ -242,12 +264,12 @@ namespace NMaier.SimpleDlna.Server.Ssdp
         );
       // Some buggy network equipment will swallow multicast packets, so lets
       // cheat, increase the odds, by sending to broadcast.
-      SendDatagram(
-        BROAD_ENDP,
-        dev.Address,
-        String.Format("NOTIFY * HTTP/1.1\r\n{0}\r\n", headers.HeaderBlock),
-        sticky
-        );
+      //SendDatagram(
+      //  BROAD_ENDP,
+      //  dev.Address,
+      //  String.Format("NOTIFY * HTTP/1.1\r\n{0}\r\n", headers.HeaderBlock),
+      //  sticky
+      //  );
       DebugFormat("{0} said {1}", dev.USN, type);
     }
 
@@ -255,8 +277,10 @@ namespace NMaier.SimpleDlna.Server.Ssdp
                                        IPAddress address)
     {
       List<UpnpDevice> list;
-      lock (devices) {
-        if (!devices.TryGetValue(UUID, out list)) {
+      lock (devices)
+      {
+        if (!devices.TryGetValue(UUID, out list))
+        {
           devices.Add(UUID, list = new List<UpnpDevice>());
         }
       }
@@ -267,7 +291,8 @@ namespace NMaier.SimpleDlna.Server.Ssdp
         "urn:schemas-upnp-org:service:ConnectionManager:1",
         "urn:schemas-upnp-org:service:X_MS_MediaReceiverRegistrar:1",
         "uuid:" + UUID
-      }) {
+      })
+      {
         list.Add(new UpnpDevice(UUID, t, Descriptor, address));
       }
 
@@ -277,13 +302,16 @@ namespace NMaier.SimpleDlna.Server.Ssdp
 
     internal void RespondToSearch(IPEndPoint endpoint, string req)
     {
-      if (req == "ssdp:all") {
+      if (req == "ssdp:all")
+      {
         req = null;
       }
 
       DebugFormat("RespondToSearch {0} {1}", endpoint, req);
-      foreach (var d in Devices) {
-        if (!string.IsNullOrEmpty(req) && req != d.Type) {
+      foreach (var d in Devices)
+      {
+        if (!string.IsNullOrEmpty(req) && req != d.Type)
+        {
           continue;
         }
         SendSearchResponse(endpoint, d);
@@ -293,13 +321,16 @@ namespace NMaier.SimpleDlna.Server.Ssdp
     internal void UnregisterNotification(Guid UUID)
     {
       List<UpnpDevice> dl;
-      lock (devices) {
-        if (!devices.TryGetValue(UUID, out dl)) {
+      lock (devices)
+      {
+        if (!devices.TryGetValue(UUID, out dl))
+        {
           return;
         }
         devices.Remove(UUID);
       }
-      foreach (var d in dl) {
+      foreach (var d in dl)
+      {
         NotifyDevice(d, "byebye", true);
       }
       DebugFormat("Unregistered mount {0}", UUID);
@@ -309,7 +340,8 @@ namespace NMaier.SimpleDlna.Server.Ssdp
     {
       Debug("Disposing SSDP");
       running = false;
-      while (messageQueue.Count != 0) {
+      while (messageQueue.Count != 0)
+      {
         datagramPosted.WaitOne();
       }
 

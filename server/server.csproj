@@ -67,6 +67,7 @@
     <Compile Include="Comparers\FileSizeComparer.cs" />
     <Compile Include="Comparers\IItemComparer.cs" />
     <Compile Include="Comparers\TitleComparer.cs" />
+    <Compile Include="Configuration.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Handlers\IndexHandler.cs" />
     <Compile Include="Http\HttpAuthorizationEventArgs.cs" />

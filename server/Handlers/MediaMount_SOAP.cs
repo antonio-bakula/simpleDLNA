@@ -208,6 +208,9 @@ namespace NMaier.SimpleDlna.Server
 
     private static void Browse_AddFolder(XmlDocument result, IMediaFolder f)
     {
+      if (f == null)
+        return;
+
       var meta = f as IMetaInfo;
       var container = result.CreateElement(string.Empty, "container", NS_DIDL);
       container.SetAttribute("restricted", "0");
@@ -373,7 +376,7 @@ namespace NMaier.SimpleDlna.Server
         Debug("Not all params provided", ex);
       }
 
-      var root = GetItem(id) as IMediaFolder;
+      var mediaItem = GetItem(id) as IMediaItem;
       var result = new XmlDocument();
 
       var didl = result.CreateElement(string.Empty, "DIDL-Lite", NS_DIDL);
@@ -383,19 +386,35 @@ namespace NMaier.SimpleDlna.Server
       didl.SetAttribute("xmlns:sec", NS_SEC);
       result.AppendChild(didl);
 
-      if (flag == "BrowseMetadata") {
-        Browse_AddFolder(result, root);
-        provided++;
+      int childCount = 0;
+      if (mediaItem is IMediaFolder)
+      {
+        var root = mediaItem as IMediaFolder;
+        if (flag == "BrowseMetadata")
+        {
+          Browse_AddFolder(result, root);
+          provided++;
+        }
+        else
+        {
+          provided = BrowseFolder_AddItems(request, result, root, start, requested);
+        }
+        childCount = root.ChildCount;
       }
-      else {
-        provided = BrowseFolder_AddItems(
-          request, result, root, start, requested);
+      else if (mediaItem is IMediaResource)
+      {
+        childCount = 0;
+        provided = 1;
+        //var item = result.CreateElement(string.Empty, "item", NS_DIDL);
+        //item.SetAttribute("id", id);
+        //AddGeneralProperties((mediaItem as IMediaResource).Properties, item);
+        Browse_AddItem(request, result, mediaItem as IMediaResource);
       }
-      var resXML = result.OuterXml;
+
       rv = new AttributeCollection() {
-            { "Result", resXML },
+            { "Result", result.OuterXml },
             { "NumberReturned", provided.ToString() },
-            { "TotalMatches", root.ChildCount.ToString() },
+            { "TotalMatches", childCount.ToString() },
             { "UpdateID", systemID.ToString() }
             };
       soapCache[key] = rv;

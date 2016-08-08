@@ -94,6 +94,7 @@ namespace NMaier.SimpleDlna.GUI
       {
         cacheFile = new FileInfo(Config.cache);
       }
+      NMaier.SimpleDlna.Server.Configuration.DontCheckGetCapInfoIPList = Config.DontCheckGetCapInfoIPList;
       CreateHandle();
       SetupServer();
     }
@@ -487,6 +488,7 @@ namespace NMaier.SimpleDlna.GUI
         var outfile = Path.Combine(cacheDir, descriptorFile);
         File.Copy(file.FullName, outfile, true);
         file.Delete();
+        NMaier.SimpleDlna.Server.Configuration.DontCheckGetCapInfoIPList = Config.DontCheckGetCapInfoIPList;
       }
       catch (Exception ex) {
         log.Error("Failed to write descriptors", ex);
