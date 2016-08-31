@@ -98,7 +98,7 @@ namespace NMaier.SimpleDlna.Server
         { DlnaMime.ImageGIF, "image/gif" },
         { DlnaMime.ImageJPEG, "image/jpeg" },
         { DlnaMime.ImagePNG, "image/png" },
-        { DlnaMime.SubtitleSRT, "smi/caption" },
+        { DlnaMime.SubtitleSRT, "smi/caption; charset=utf-8" },
         { DlnaMime.Video3GPP, "video/3gpp" },
         { DlnaMime.VideoAVC, "video/mp4" },
         { DlnaMime.VideoAVI, "video/avi" },
